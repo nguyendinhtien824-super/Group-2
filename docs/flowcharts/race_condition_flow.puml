@@ -1,0 +1,65 @@
+@startuml
+' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng race_condition_flow.puml
+skinparam defaultFontName "Arial"
+skinparam titleFontName "Arial"
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #FFFFFF
+skinparam ActivityDiamondBorderColor #334155
+skinparam NoteBackgroundColor #FFF7ED
+skinparam NoteBorderColor #F97316
+
+title Luồng Ngăn Âm Kho - So sánh 4 Cơ chế
+
+start
+:Nhận yêu cầu mua Flash Sale Item;
+:Chọn cơ chế xử lý đồng thời;
+
+switch (LockType)
+case (NO_LOCK)
+  :Thread đọc soldQty và limitedQty;
+  :Kiểm tra còn hàng;
+  :Trừ kho không có vùng bảo vệ;
+  :Ghi lại CSV;
+  note right
+    Dùng làm baseline.
+    Có nguy cơ nhiều thread cùng đọc
+    một giá trị kho cũ và gây âm kho.
+  end note
+case (FILE_LOCK)
+  :Mở file CSV;
+  :Khóa file bằng Java NIO FileLock;
+  :Đọc tồn kho mới nhất;
+  :Kiểm tra còn hàng;
+  :Cập nhật soldQty/version;
+  :Ghi lại CSV;
+  :Giải phóng FileLock;
+case (SYNCHRONIZED)
+  :Vào synchronized critical section;
+  :Đọc tồn kho trong vùng khóa;
+  :Kiểm tra còn hàng;
+  :Cập nhật soldQty/version;
+  :Ghi lại CSV;
+  :Thoát critical section;
+case (OPTIMISTIC_LOCK)
+  :Đọc soldQty, limitedQty và version;
+  :Kiểm tra còn hàng;
+  :Tính version mới;
+  if (Version hiện tại còn khớp?) then (Có)
+    :Ghi soldQty và tăng version;
+  else (Không)
+    :Tăng retryCount;
+    if (retryCount < MAX_RETRY?) then (Có)
+      :Đọc lại dữ liệu và thử lại;
+    else (Không)
+      :Từ chối giao dịch do conflict;
+    endif
+  endif
+endswitch
+
+:Trả kết quả thành công/thất bại;
+:Ghi transaction nếu cần;
+stop
+@enduml

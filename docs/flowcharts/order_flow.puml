@@ -1,0 +1,61 @@
+@startuml
+' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng order_flow.puml
+skinparam defaultFontName "Arial"
+skinparam titleFontName "Arial"
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #FFFFFF
+skinparam ActivityDiamondBorderColor #334155
+skinparam NoteBackgroundColor #FFF7ED
+skinparam NoteBorderColor #F97316
+
+title Luồng Đặt Hàng Flash Sale (Order Placement Flow)
+
+start
+:Khách hàng đăng nhập hoặc nhập mã khách hàng;
+:Xem danh sách Flash Sale Item;
+:Chọn itemId và số lượng muốn mua;
+if (Số lượng <= 0?) then (Sai)
+  :Thông báo số lượng không hợp lệ;
+  stop
+else (Hợp lệ)
+endif
+
+:OrderController nhận yêu cầu;
+:FlashSaleService kiểm tra item tồn tại;
+if (Item tồn tại?) then (Không)
+  :Thông báo không tìm thấy Flash Sale Item;
+  stop
+else (Có)
+endif
+
+:Kiểm tra giới hạn mua tối đa 2 sản phẩm cùng loại trong sự kiện;
+if (Vượt giới hạn?) then (Có)
+  :Từ chối đơn hàng;
+  :Thông báo vượt giới hạn mua;
+  stop
+else (Không)
+endif
+
+:Gọi Repository xử lý tồn kho theo cơ chế khóa đang chọn;
+if (Còn đủ tồn kho?) then (Không)
+  :Thông báo hết hàng hoặc không đủ số lượng;
+  stop
+else (Có)
+endif
+
+:Trừ tồn kho và tăng soldQty/version;
+if (Cập nhật kho thành công?) then (Không)
+  :Thông báo xung đột đồng bộ hoặc retry thất bại;
+  stop
+else (Có)
+endif
+
+:Tạo Order;
+:Tạo OrderDetail;
+:Ghi Order và OrderDetail xuống CSV;
+:Thông báo đặt hàng thành công;
+stop
+@enduml

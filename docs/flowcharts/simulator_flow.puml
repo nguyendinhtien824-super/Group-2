@@ -1,0 +1,53 @@
+@startuml
+' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng simulator_flow.puml
+skinparam defaultFontName "Arial"
+skinparam titleFontName "Arial"
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #FFFFFF
+skinparam ActivityDiamondBorderColor #334155
+skinparam NoteBackgroundColor #FFF7ED
+skinparam NoteBorderColor #F97316
+
+title Luồng Simulator Tool (CountDownLatch)
+
+start
+:Người dùng nhập số thread, tồn kho ban đầu và cơ chế lock;
+:SimulatorController gọi SimulatorService;
+:Khởi tạo FlashItem giả lập;
+:Khởi tạo ExecutorService với N threads;
+:Khởi tạo readyLatch = CountDownLatch(N);
+:Khởi tạo startLatch = CountDownLatch(1);
+:Khởi tạo doneLatch = CountDownLatch(N);
+
+:Tạo N tác vụ mua hàng;
+fork
+  :Mỗi thread báo sẵn sàng bằng readyLatch.countDown();
+  :Mỗi thread chờ startLatch.await();
+fork again
+  :Main thread chờ readyLatch.await();
+  :Main thread bắt đầu đo thời gian;
+  :Main thread gọi startLatch.countDown();
+end fork
+
+:Các thread đồng loạt xử lý mua hàng;
+:Mỗi thread áp dụng LockType đã chọn;
+:Ghi kết quả success/fail/retry vào bộ đếm;
+:doneLatch.countDown();
+
+:Main thread chờ doneLatch.await();
+:Dừng đo thời gian;
+:Tính TPS = successCount / elapsedSeconds;
+:Tính finalStock, negativeStockRate, retryRate;
+:So sánh throughput với NO_LOCK baseline;
+if (0% âm kho và throughput giảm <= 30%?) then (Đạt)
+  :Đánh dấu cơ chế đạt mục tiêu PDF;
+else (Không đạt)
+  :Đánh dấu cơ chế không đạt mục tiêu PDF;
+endif
+:Lưu transactions.csv;
+:In bảng kết quả simulator;
+stop
+@enduml
