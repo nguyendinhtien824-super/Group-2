@@ -1,0 +1,277 @@
+@startuml
+' Render PNG bang: java -jar plantuml.jar -charset UTF-8 -tpng class_diagram.puml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package "model" {
+    abstract class BaseEntity {
+        + getId(): String
+        + toCsvLine(): String
+    }
+
+    class Product {
+        - productId: String
+        - name: String
+        - brand: String
+        - category: String
+        - price: int
+        - stock: int
+        - description: String
+        + fromCsvLine(String): Product
+    }
+
+    class Customer {
+        - customerId: String
+        - name: String
+        - email: String
+        - phone: String
+        - address: String
+        - avatarUrl: String
+        - tier: CustTier
+        - status: String
+        + fromCsvLine(String): Customer
+    }
+
+    class FlashSaleEvent {
+        - eventId: String
+        - name: String
+        - startTime: String
+        - endTime: String
+        - status: String
+        + fromCsvLine(String): FlashSaleEvent
+    }
+
+    class FlashItem {
+        - itemId: String
+        - productId: String
+        - eventId: String
+        - productName: String
+        - originalPrice: int
+        - salePrice: int
+        - initialStock: int
+        - soldQty: int
+        - version: int
+        + getRemainingStock(): int
+        + fromCsvLine(String): FlashItem
+    }
+
+    class Voucher {
+        - voucherId: String
+        - code: String
+        - type: String
+        - value: int
+        - maxDiscount: int
+        - minOrderAmount: int
+        - remainingUses: int
+        + fromCsvLine(String): Voucher
+    }
+
+    class Order {
+        - orderId: String
+        - customerId: String
+        - orderDate: String
+        - totalAmount: int
+        - status: String
+        + fromCsvLine(String): Order
+    }
+
+    class OrderDetail {
+        - detailId: String
+        - orderId: String
+        - productId: String
+        - quantity: int
+        - unitPrice: int
+        - subtotal: int
+        + fromCsvLine(String): OrderDetail
+    }
+
+    class OrderTransaction {
+        - transactionId: String
+        - orderId: String
+        - customerId: String
+        - itemId: String
+        - quantity: int
+        - status: String
+        - message: String
+        - timestamp: long
+        + fromCsvLine(String): OrderTransaction
+    }
+
+    class SimulationResult {
+        - lockType: String
+        - totalThreads: int
+        - successCount: int
+        - failedCount: int
+        - finalStock: int
+        - tps: double
+        - retryCount: int
+    }
+
+    enum LockType {
+        NO_LOCK
+        FILE_LOCK
+        SYNCHRONIZED
+        OPTIMISTIC_LOCK
+    }
+
+    enum CustTier {
+        STANDARD
+        SILVER
+        GOLD
+        DIAMOND
+    }
+
+    enum OrderStatus {
+        SUCCESS
+        FAILED
+        OUT_OF_STOCK
+        VERSION_CONFLICT
+    }
+
+    enum SaleStatus {
+        UPCOMING
+        ACTIVE
+        ENDED
+    }
+}
+
+package "exception" {
+    class DataParsingException
+    class DatabaseLockException
+    class InsufficientStockException
+    class InvalidOrderException
+    class OptimisticLockException
+}
+
+package "repository" {
+    abstract class CsvRepository<T> {
+        - filePath: String
+        - header: String
+        + findAll(): List<T>
+        + findById(String): T
+        + save(T): void
+        + saveAll(List<T>): void
+        + update(T, int): boolean
+        + deleteById(String): boolean
+    }
+
+    class ProductRepository {
+        + searchByCategoryAndPrice(String, int, int): List<Product>
+    }
+
+    class FlashItemRepository {
+        + sellWithOptimisticLock(String, int): boolean
+        + sellWithFileLock(String, int): boolean
+        + sellWithSynchronized(String, int): boolean
+    }
+
+    class CustomerRepository
+    class OrderRepository
+    class OrderDetailRepository
+    class OrderTransactionRepository
+    class VoucherRepository
+    class FlashSaleEventRepository
+}
+
+package "service" {
+    interface FlashSaleService {
+        + bookItem(String, int, String): boolean
+        + bookItem(String, int, String, String): boolean
+    }
+    class FlashSaleServiceImpl
+    class DataGeneratorService {
+        + generateAll(): Map<String, Integer>
+    }
+    class SimulatorService {
+        + runSimulation(LockType, int, int): SimulationResult
+    }
+}
+
+package "controller" {
+    class FlashSaleController
+    class OrderController
+    class CustomerController
+    class DataController
+    class SimulatorController
+}
+
+package "view" {
+    class MainView
+    class FlashSaleView
+    class OrderView
+    class SimulatorView
+    class ReportView
+    class ConsoleInput
+    class AdminView
+    class ResearcherView
+    class AdminCustomerView
+}
+
+BaseEntity <|-- Product
+BaseEntity <|-- Customer
+BaseEntity <|-- FlashSaleEvent
+BaseEntity <|-- FlashItem
+BaseEntity <|-- Voucher
+BaseEntity <|-- Order
+BaseEntity <|-- OrderDetail
+BaseEntity <|-- OrderTransaction
+
+CsvRepository <|-- ProductRepository
+CsvRepository <|-- CustomerRepository
+CsvRepository <|-- FlashItemRepository
+CsvRepository <|-- OrderRepository
+CsvRepository <|-- OrderDetailRepository
+CsvRepository <|-- OrderTransactionRepository
+CsvRepository <|-- VoucherRepository
+CsvRepository <|-- FlashSaleEventRepository
+
+FlashSaleService <|.. FlashSaleServiceImpl
+FlashSaleServiceImpl --> FlashItemRepository
+FlashSaleServiceImpl --> OrderRepository
+FlashSaleServiceImpl --> OrderDetailRepository
+FlashSaleServiceImpl --> CustomerRepository
+FlashSaleServiceImpl --> VoucherRepository
+
+SimulatorService --> OrderTransactionRepository
+FlashSaleController --> FlashSaleService
+FlashSaleController --> FlashItemRepository
+OrderController --> FlashSaleService
+CustomerController --> CustomerRepository
+DataController --> DataGeneratorService
+SimulatorController --> SimulatorService
+
+MainView --> FlashSaleController
+MainView --> OrderController
+MainView --> CustomerController
+MainView --> DataController
+MainView --> SimulatorController
+MainView --> FlashSaleView
+MainView --> OrderView
+MainView --> SimulatorView
+MainView --> ReportView
+MainView --> VoucherRepository
+MainView --> CustomerRepository
+
+MainView --> AdminView
+MainView --> ResearcherView
+
+AdminView --> FlashSaleEventRepository
+AdminView --> FlashItemRepository
+AdminView --> OrderRepository
+AdminView --> CustomerRepository
+AdminView --> VoucherRepository
+AdminView --> AdminCustomerView
+
+AdminCustomerView --> CustomerRepository
+ResearcherView --> SimulatorController
+
+FlashItem --> Product : productId
+FlashItem --> FlashSaleEvent : eventId
+Order --> Customer : customerId
+OrderDetail --> Order : orderId
+OrderTransaction --> FlashItem : itemId
+SimulatorService --> LockType
+Customer --> CustTier : tier
+FlashSaleEvent --> SaleStatus : status
+OrderTransaction --> OrderStatus : status
+@enduml

@@ -1,0 +1,103 @@
+@startuml
+' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng use_case_diagram.puml
+left to right direction
+skinparam defaultFontName "Arial"
+skinparam actorFontName "Arial"
+skinparam usecaseFontName "Arial"
+skinparam packageFontName "Arial"
+skinparam rectangleFontName "Arial"
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ArrowColor #334155
+skinparam rectangle {
+  BorderColor #334155
+  BackgroundColor #F8FAFC
+}
+skinparam usecase {
+  BorderColor #334155
+  BackgroundColor #FFFFFF
+}
+skinparam actor {
+  BorderColor #334155
+  BackgroundColor #FFFFFF
+}
+
+title Sơ đồ Use Case Chi tiết - E-Commerce Flash Sale Simulation
+
+actor "Khách hàng\n(Customer)" as Customer
+actor "Quản trị viên\n(Admin)" as Admin
+actor "Người nghiên cứu\n(Researcher)" as Researcher
+
+rectangle "Hệ thống Mô phỏng Shopee Flash Sale" {
+
+  package "Nghiệp vụ Khách hàng (Customer)" {
+    package "Mua hàng" {
+      usecase "Đăng ký tài khoản mới (Validate trùng lặp)" as UC_Register
+      usecase "Đăng nhập hệ thống (Check trạng thái Banned)" as UC_Login
+      usecase "Xem danh sách sự kiện Flash Sale (Active/Pending)" as UC_ViewFlashSale
+      usecase "Xem chi tiết sản phẩm Flash Sale & Tồn kho" as UC_ViewItemDetail
+      usecase "Đặt hàng sản phẩm Flash Sale" as UC_PlaceOrder
+      usecase "Chọn và áp dụng mã Voucher giảm giá" as UC_ApplyVoucher
+      usecase "Áp dụng giảm giá tự động VIP Tier" as UC_ApplyTier
+    }
+
+    package "Theo dõi đơn hàng" {
+      usecase "Xem danh sách tất cả đơn hàng của tôi" as UC_ViewOrders
+      usecase "Xem chi tiết sản phẩm trong một đơn hàng" as UC_ViewOrderDetail
+      usecase "Xem lịch sử giao dịch của tôi" as UC_ViewTransactions
+    }
+  }
+
+  package "Nghiệp vụ Quản trị (Admin)" {
+    usecase "Tự động sinh dữ liệu mẫu (Mock Data)" as UC_GenData
+    usecase "Quản lý thông tin khách hàng (CRUD)" as UC_CRUDCustomer
+    usecase "Khóa tài khoản khách hàng (Ban Customer)" as UC_BanCustomer
+    usecase "Mở khóa tài khoản khách hàng (Unban Customer)" as UC_UnbanCustomer
+    usecase "Tạo mới sự kiện Flash Sale" as UC_CreateEvent
+    usecase "Cập nhật trạng thái sự kiện Flash Sale" as UC_UpdateEvent
+    usecase "Thêm sản phẩm vào sự kiện Flash Sale" as UC_AddFlashItem
+    usecase "Cập nhật sản phẩm trong sự kiện Flash Sale" as UC_UpdateFlashItem
+    usecase "Xem báo cáo doanh thu chi tiết theo sự kiện" as UC_ViewRevenue
+    usecase "Thống kê hiệu quả sử dụng Voucher" as UC_ViewVoucherStats
+  }
+
+  package "Nghiệp vụ Nghiên cứu & Giả lập" {
+    usecase "Cấu hình tham số giả lập (Threads, Stock, Loop)" as UC_ConfigSim
+    usecase "Chạy giả lập đặt hàng không khóa (NO_LOCK)" as UC_RunSimNoLock
+    usecase "Chạy giả lập đặt hàng khóa vật lý CSV (FILE_LOCK)" as UC_RunSimFileLock
+    usecase "Chạy giả lập đặt hàng khóa bộ nhớ (SYNCHRONIZED)" as UC_RunSimSync
+    usecase "Chạy giả lập đặt hàng khóa phiên bản (OPTIMISTIC_LOCK)" as UC_RunSimOptimistic
+    usecase "Chạy benchmark so sánh hiệu năng 4 cơ chế" as UC_RunBenchmark
+  }
+}
+
+Customer --> UC_Register
+Customer --> UC_Login
+Customer --> UC_ViewFlashSale
+Customer --> UC_ViewItemDetail
+Customer --> UC_PlaceOrder
+Customer --> UC_ApplyVoucher
+Customer --> UC_ApplyTier
+Customer --> UC_ViewOrders
+Customer --> UC_ViewOrderDetail
+Customer --> UC_ViewTransactions
+
+
+Admin --> UC_GenData
+Admin --> UC_CRUDCustomer
+Admin --> UC_BanCustomer
+Admin --> UC_UnbanCustomer
+Admin --> UC_CreateEvent
+Admin --> UC_UpdateEvent
+Admin --> UC_AddFlashItem
+Admin --> UC_UpdateFlashItem
+Admin --> UC_ViewRevenue
+Admin --> UC_ViewVoucherStats
+
+Researcher --> UC_ConfigSim
+Researcher --> UC_RunSimNoLock
+Researcher --> UC_RunSimFileLock
+Researcher --> UC_RunSimSync
+Researcher --> UC_RunSimOptimistic
+Researcher --> UC_RunBenchmark
+@enduml

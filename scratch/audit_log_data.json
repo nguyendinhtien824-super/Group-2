@@ -1,0 +1,89 @@
+{
+  "studentName": "Do Bui Quang Hung",
+  "studentId": "QE190032",
+  "totalPrompts": 45,
+  "corePrompts": 5,
+  "hallucinationsCount": 3,
+  "dtcDecomposition": 1,
+  "dtcPattern": 1,
+  "dtcAbstraction": 2,
+  "dtcAlgorithms": 1,
+  "sheet2Entries": [
+    {
+      "id": "001",
+      "type": "DECISION",
+      "stage": "Decomposition",
+      "problem": "Designing CSV-based data storage architecture for the Flash Sale simulation application.",
+      "prompt": "I need to design a CSV-based data storage system for a Java OOP Flash Sale simulation application. Please analyze the data tables structure and suggest how to organize the Entity classes inheriting from a common parent class to minimize code duplication.",
+      "response": "AI suggested creating an abstract BaseEntity containing common fields (id, createdAt, updatedAt) and defining two abstract methods: toCsvLine() and fromCsvLine(String csv).",
+      "delta": "Critical Thinking: Identified that the static fromCsvLine method cannot be declared as abstract in the parent BaseEntity class because static methods cannot be overridden in Java.\nContextualization: A centralized file reading mechanism is needed; if each subclass implements parsing individually, the Repository layer will have duplicate code and cannot use generics.\nCreative Synthesis: Proposed moving the CSV row parsing logic into a protected abstract T parseLine(String line) method within the generic CsvRepository<T>. Each specific repository (e.g., ProductRepository) will inherit from CsvRepository and implement its own parseLine method.\nDecision: Designed BaseEntity to only hold getId() and toCsvLine() for subclasses to implement. The actual conversion of CSV rows back to objects is handled by specific repositories via the parseLine method.",
+      "evidence": "BaseEntity.java line 7-18, CsvRepository.java line 42"
+    },
+    {
+      "id": "002",
+      "type": "DECISION",
+      "stage": "Abstraction",
+      "problem": "Optimizing the Generic Repository to avoid duplicate code for each entity during CSV read/write operations.",
+      "prompt": "Please write a generic CsvRepository<T extends BaseEntity> class in Java to handle CRUD operations on CSV files automatically without rewriting code for each specific entity.",
+      "response": "AI created a generic CsvRepository<T> class utilizing Java Reflection (Field[] fields = entity.getClass().getDeclaredFields()) to automatically serialize objects into CSV lines.",
+      "delta": "Critical Thinking: Using Reflection at runtime for every row of data during large-scale file read/write operations (over 10,000 rows) causes severe performance degradation due to reflection overhead.\nContextualization: The console application simulates high-concurrency flash sales running hundreds of threads writing files simultaneously. File I/O performance is extremely critical.\nCreative Synthesis: Instead of dynamic reflection, relied on pure OOP inheritance: subclasses implement their own toCsvLine() to serialize to CSV rapidly, and concrete repositories parse lines manually. Lock mechanism is used to synchronize writes.\nDecision: Removed reflection-based serialization from CsvRepository, calling entity.toCsvLine() directly instead. Integrated ReentrantReadWriteLock in CsvRepository to safeguard concurrent access.",
+      "evidence": "CsvRepository.java line 45-137"
+    },
+    {
+      "id": "003",
+      "type": "PROBLEM-SOLVING",
+      "stage": "Algorithms",
+      "problem": "Relational integrity constraints in large-scale random data generation.",
+      "prompt": "I need to write a DataGeneratorService class to randomly generate 5000 products, 2000 customers, and 500 flash items linked to those products. Please write the random generation algorithm.",
+      "response": "AI suggested generating random, completely independent IDs for each entity.",
+      "delta": "Critical Thinking: Independent random generation leads to foreign key violations when flash items reference non-existent product IDs, or orders reference non-existent customer IDs.\nContextualization: The mock database must preserve relational integrity (e.g., FlashItem's foreign key must exist in the generated product list, and Orders must belong to valid Customers).\nCreative Synthesis: Designed a sequential generation flow: first generate products and store the ID range (P-00001 to P-05000). When generating flash items, use ThreadLocalRandom to pick a product ID within the valid range. Do the same for customers and orders.\nDecision: Implemented sequential generation and restricted random ID ranges: Products (P-00001 to P-05000) -> Customers (C-00001 to C-02000) -> FlashEvents (EV-001 to EV-010) -> FlashItems and Orders referencing those valid IDs.",
+      "evidence": "DataGeneratorService.java line 64-245"
+    },
+    {
+      "id": "004",
+      "type": "PROBLEM-SOLVING",
+      "stage": "Pattern Recognition",
+      "problem": "Simulating race conditions (negative stock) during checkouts without locks.",
+      "prompt": "How can I simulate a race condition scenario causing negative stock in a flash sale ordering application when running multi-threaded checkout without locks?",
+      "response": "AI provided a code snippet that updates stock by reading the CSV, decrementing stock in memory, and overwriting the CSV file. AI claimed this would demonstrate write conflicts.",
+      "delta": "Critical Thinking: AI pointed out write conflicts but did not explain the exact concurrency race window that leads to negative stock and why checkout transactions succeed beyond physical limits.\nContextualization: Need to demonstrate to the examiner that race conditions occur due to the non-atomic delay between 'checking stock' and 'updating stock' on slow file I/O operations.\nCreative Synthesis: Designed a NO_LOCK execution path lacking synchronization. When the simulator spawns hundreds of threads checking out at the same millisecond, the transactional logs (transactions.csv) prove that an initial stock of 5 allowed 30 sales, leaving a final stock of -19.\nDecision: Implemented the NO_LOCK flow where checkout succeeds if the read stock value is valid at read-time, ignoring concurrent writes. Saved simulator logs to generate the race_condition_flow.png diagram.",
+      "evidence": "transactions.csv and simulator output showing negative stock"
+    },
+    {
+      "id": "005",
+      "type": "VERIFICATION",
+      "stage": "Algorithms",
+      "problem": "Verifying CSV file safety and integrity under high-concurrency writes.",
+      "prompt": "I ran a simulation with 100 concurrent threads writing to a CSV file using standard Java Writers, and the file got corrupted (overwritten lines, interleaved characters, missing lines). Please explain why and how to fix it.",
+      "response": "AI explained that standard Java Writers are not thread-safe and proposed using synchronized on the write method.",
+      "delta": "Critical Thinking: JVM-level synchronized write methods serialize everything, blocking concurrent read operations and creating a major performance bottleneck. Furthermore, JVM synchronization does not block other processes accessing the file.\nContextualization: Need a thread-safe solution for repository file I/O that allows parallel reads but guarantees mutually exclusive write access.\nCreative Synthesis: Utilized a ReentrantReadWriteLock in CsvRepository. Multiple threads can acquire the readLock() simultaneously for fast queries, while only one thread can acquire the writeLock() to update the CSV safely.\nDecision: Declared ReentrantReadWriteLock rwLock in CsvRepository. Wrapped findAll() with readLock and save()/update()/deleteById() with writeLock.",
+      "evidence": "CsvRepository.java line 18, 45, 73, 95, 113"
+    }
+  ],
+  "sheet3Entries": [
+    {
+      "id": "001",
+      "type": "Fabrication",
+      "claim": "AI claimed that Java's standard JDK includes a package named java.nio.file.csv and a class named CSVParser for reading and writing CSV files.",
+      "reality": "There is no package named java.nio.file.csv or class CSVParser in the standard Java SE JDK 17 library.",
+      "check": "Attempting to import this package caused compile error 'package java.nio.file.csv does not exist'. Verified by searching official Oracle Java SE 17 documentation.",
+      "corrective": "Implemented custom parsing logic manually using String.split(\",\") inside repository subclasses inheriting from generic CsvRepository."
+    },
+    {
+      "id": "002",
+      "type": "Oversimplification",
+      "claim": "AI suggested using Files.writeString(path, content, StandardOpenOption.APPEND) directly in a multi-threaded context and asserted that the OS would automatically queue writes safely without locks.",
+      "reality": "Writing concurrently without locking using APPEND causes interleaved lines, data corruption, and malformed CSV rows.",
+      "check": "Ran simulation with 100 concurrent threads and inspected the output CSV, finding truncated lines and corrupted headers.",
+      "corrective": "Implemented ReentrantReadWriteLock in CsvRepository to ensure only one thread can perform file write operations at a time."
+    },
+    {
+      "id": "004",
+      "type": "Logic Error",
+      "claim": "AI suggested resolving the NO_LOCK race condition by adding a basic if (stock > 0) check before checkout and claimed this made the code thread-safe.",
+      "reality": "A simple if statement is not atomic. Multiple threads can read stock = 1 simultaneously, pass the check, and concurrently subtract stock, causing negative inventory.",
+      "check": "Ran simulator with 500 threads and observed a final stock of -19 despite having the check in place.",
+      "corrective": "Identified this as a classic Check-then-Act concurrency bug. Stressed that synchronization locks (Synchronized/File Lock/Optimistic Lock) are mandatory to make the operation atomic."
+    }
+  ]
+}

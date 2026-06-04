@@ -1,0 +1,51 @@
+@startuml
+skinparam roundcorner 0
+skinparam defaultFontName "Arial"
+skinparam shadowing false
+skinparam ActivityShape rectangle
+skinparam ArrowColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #FFFFFF
+skinparam conditionStyle InsideDiamond
+skinparam ConditionEndStyle hline
+
+title Luồng Động Cơ Giả Lập Đa Luồng (Simulator Engine Flow)
+
+start
+:Khởi tạo các thông số & Rào chắn (CountDownLatch);
+:Khởi tạo Thread Pool;
+
+fork
+  partition "Luồng Điều Phối (Main)" {
+    :Chờ các luồng Client sẵn sàng;
+    :Phát lệnh kích nổ đồng thời (startLatch.countDown);
+    :Chờ toàn bộ N luồng hoàn tất;
+    :Tổng hợp kết quả và ghi file CSV;
+  }
+fork again
+  partition "N Luồng Khách Hàng (Clients)" {
+    :Chờ lệnh xuất phát (startLatch.await);
+    
+    if (Cơ chế được cấu hình là NO_LOCK?) then ( Yes )
+      :Thực thi đặt hàng không đồng bộ;
+    else ( No )
+      if (Cơ chế là FILE_LOCK?) then ( Yes )
+        :Sử dụng ReentrantLock / File Lock;
+      else ( No )
+        if (Cơ chế là SYNCHRONIZED?) then ( Yes )
+          :Sử dụng JVM Synchronized block;
+        else ( Yes: OPTIMISTIC_LOCK )
+          :Áp dụng vòng lặp retry với Version;
+        endif
+      endif
+    endif
+    
+    :Lưu lịch sử giao dịch vào hàng đợi;
+    :Báo cáo hoàn thành (doneLatch.countDown);
+  }
+end fork
+
+:Hiển thị bảng so sánh Benchmark lên Console;
+stop
+@enduml
