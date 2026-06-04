@@ -1,0 +1,39 @@
+@startuml
+' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng datagen_flow.puml
+skinparam defaultFontName "Arial"
+skinparam titleFontName "Arial"
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #FFFFFF
+skinparam ActivityDiamondBorderColor #334155
+skinparam NoteBackgroundColor #FFF7ED
+skinparam NoteBorderColor #F97316
+
+title Luồng Generate Data CSV (10.000+ dòng)
+
+start
+:Khởi tạo DataGeneratorService;
+:Tạo thư mục data nếu chưa tồn tại;
+:Tạo danh sách 5.000 Product;
+:Ghi products.csv;
+:Tạo danh sách 2.000 Customer;
+:Ghi customers.csv;
+:Tạo danh sách FlashSaleEvent;
+:Ghi flash_events.csv;
+:Tạo 500 FlashItem liên kết Product và Event;
+:Ghi flash_items.csv;
+:Tạo 2.500 Order;
+:Ghi orders.csv;
+:Tạo 2.500 OrderDetail;
+:Ghi order_details.csv;
+:Tạo transactions.csv với header;
+:Đếm tổng số dòng dữ liệu;
+if (Tổng dòng >= 10.000?) then (Đạt)
+  :Thông báo sinh dữ liệu thành công;
+else (Không đạt)
+  :Báo lỗi dữ liệu chưa đủ yêu cầu PDF;
+endif
+stop
+@enduml
