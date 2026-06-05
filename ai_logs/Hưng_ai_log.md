@@ -1,6 +1,6 @@
 # AI Log & Reflection - Thành viên 1
 
-**Họ và tên:** Đỗ Bùi Quang Hưng  
+**Họ và tên:** Đỗ Bá Quang Hưng  
 **MSSV:** QE190032  
 **Nhiệm vụ phân công:** Thiết kế kiến trúc Entity trừu tượng (`BaseEntity`), lớp Repository dùng Generic (`CsvRepository<T>`), xây dựng logic sinh dữ liệu giả lập hệ thống (`DataGeneratorService`), cấu hình và kiểm nghiệm luồng mua hàng đa luồng không dùng khóa (`NO_LOCK` flow) để chứng minh hiện tượng race condition gây âm kho. Phụ trách vẽ Sơ đồ luồng sinh dữ liệu & Sơ đồ UML Class Diagram tổng thể cho dự án.
 
