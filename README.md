@@ -154,7 +154,7 @@ mvn test
 
 ## 👥 Thông Tin Nhóm & Phân Công Nhiệm Vụ (Team Members)
 
-Dự án được hoàn thiện bởi các thành viên thuộc **Nhóm 01 - Lớp LAB211**:
+Dự án được hoàn thiện bởi các thành viên thuộc **Nhóm 02 - Lớp LAB211**:
 
 | MSSV | Họ và tên | Vai trò / Nhiệm vụ chính | Đóng góp |
 |:---:|---|---|:---:|
