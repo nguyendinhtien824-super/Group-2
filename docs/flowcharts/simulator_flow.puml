@@ -1,53 +1,51 @@
 @startuml
-' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng simulator_flow.puml
+skinparam roundcorner 0
 skinparam defaultFontName "Arial"
-skinparam titleFontName "Arial"
 skinparam shadowing false
+skinparam ActivityShape rectangle
 skinparam ArrowColor #334155
 skinparam ActivityBackgroundColor #F8FAFC
 skinparam ActivityBorderColor #334155
 skinparam ActivityDiamondBackgroundColor #FFFFFF
-skinparam ActivityDiamondBorderColor #334155
-skinparam NoteBackgroundColor #FFF7ED
-skinparam NoteBorderColor #F97316
+skinparam conditionStyle InsideDiamond
+skinparam ConditionEndStyle hline
 
-title Luồng Simulator Tool (CountDownLatch)
+title Luồng Động Cơ Giả Lập Đa Luồng (Simulator Engine Flow)
 
 start
-:Người dùng nhập số thread, tồn kho ban đầu và cơ chế lock;
-:SimulatorController gọi SimulatorService;
-:Khởi tạo FlashItem giả lập;
-:Khởi tạo ExecutorService với N threads;
-:Khởi tạo readyLatch = CountDownLatch(N);
-:Khởi tạo startLatch = CountDownLatch(1);
-:Khởi tạo doneLatch = CountDownLatch(N);
+:Khởi tạo các thông số & Rào chắn (CountDownLatch);
+:Khởi tạo Thread Pool;
 
-:Tạo N tác vụ mua hàng;
 fork
-  :Mỗi thread báo sẵn sàng bằng readyLatch.countDown();
-  :Mỗi thread chờ startLatch.await();
+  partition "Luồng Điều Phối (Main)" {
+    :Chờ các luồng Client sẵn sàng;
+    :Phát lệnh kích nổ đồng thời (startLatch.countDown);
+    :Chờ toàn bộ N luồng hoàn tất;
+    :Tổng hợp kết quả và ghi file CSV;
+  }
 fork again
-  :Main thread chờ readyLatch.await();
-  :Main thread bắt đầu đo thời gian;
-  :Main thread gọi startLatch.countDown();
+  partition "N Luồng Khách Hàng (Clients)" {
+    :Chờ lệnh xuất phát (startLatch.await);
+    
+    if (Cơ chế được cấu hình là NO_LOCK?) then ( Yes )
+      :Thực thi đặt hàng không đồng bộ;
+    else ( No )
+      if (Cơ chế là FILE_LOCK?) then ( Yes )
+        :Sử dụng ReentrantLock / File Lock;
+      else ( No )
+        if (Cơ chế là SYNCHRONIZED?) then ( Yes )
+          :Sử dụng JVM Synchronized block;
+        else ( Yes: OPTIMISTIC_LOCK )
+          :Áp dụng vòng lặp retry với Version;
+        endif
+      endif
+    endif
+    
+    :Lưu lịch sử giao dịch vào hàng đợi;
+    :Báo cáo hoàn thành (doneLatch.countDown);
+  }
 end fork
 
-:Các thread đồng loạt xử lý mua hàng;
-:Mỗi thread áp dụng LockType đã chọn;
-:Ghi kết quả success/fail/retry vào bộ đếm;
-:doneLatch.countDown();
-
-:Main thread chờ doneLatch.await();
-:Dừng đo thời gian;
-:Tính TPS = successCount / elapsedSeconds;
-:Tính finalStock, negativeStockRate, retryRate;
-:So sánh throughput với NO_LOCK baseline;
-if (0% âm kho và throughput giảm <= 30%?) then (Đạt)
-  :Đánh dấu cơ chế đạt mục tiêu PDF;
-else (Không đạt)
-  :Đánh dấu cơ chế không đạt mục tiêu PDF;
-endif
-:Lưu transactions.csv;
-:In bảng kết quả simulator;
+:Hiển thị bảng so sánh Benchmark lên Console;
 stop
 @enduml

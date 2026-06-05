@@ -1,61 +1,65 @@
 @startuml
-' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng order_flow.puml
+skinparam roundcorner 0
 skinparam defaultFontName "Arial"
 skinparam titleFontName "Arial"
 skinparam shadowing false
+skinparam ActivityShape rectangle
 skinparam ArrowColor #334155
 skinparam ActivityBackgroundColor #F8FAFC
 skinparam ActivityBorderColor #334155
 skinparam ActivityDiamondBackgroundColor #FFFFFF
 skinparam ActivityDiamondBorderColor #334155
-skinparam NoteBackgroundColor #FFF7ED
-skinparam NoteBorderColor #F97316
+skinparam conditionStyle InsideDiamond
+skinparam ConditionEndStyle hline
 
-title Luồng Đặt Hàng Flash Sale (Order Placement Flow)
+title Luồng Nghiệp Vụ Đặt Hàng (Flash Sale Checkout Flow)
 
 start
-:Khách hàng đăng nhập hoặc nhập mã khách hàng;
-:Xem danh sách Flash Sale Item;
-:Chọn itemId và số lượng muốn mua;
-if (Số lượng <= 0?) then (Sai)
-  :Thông báo số lượng không hợp lệ;
+:Nhận yêu cầu: itemId, quantity, customerId, voucherCode;
+if (Khách hàng có tồn tại?) then ( No )
+  :Báo lỗi: Khách hàng không tồn tại;
   stop
-else (Hợp lệ)
 endif
 
-:OrderController nhận yêu cầu;
-:FlashSaleService kiểm tra item tồn tại;
-if (Item tồn tại?) then (Không)
-  :Thông báo không tìm thấy Flash Sale Item;
+if (Trạng thái tài khoản là BANNED?) then ( Yes )
+  :Báo lỗi: Tài khoản đã bị khóa;
   stop
-else (Có)
 endif
 
-:Kiểm tra giới hạn mua tối đa 2 sản phẩm cùng loại trong sự kiện;
-if (Vượt giới hạn?) then (Có)
-  :Từ chối đơn hàng;
-  :Thông báo vượt giới hạn mua;
+:Xác định giới hạn mua theo hạng (maxQty);
+if (Số lượng đặt mua > maxQty?) then ( Yes )
+  :Báo lỗi: Vượt giới hạn mua mỗi lượt;
   stop
-else (Không)
 endif
 
-:Gọi Repository xử lý tồn kho theo cơ chế khóa đang chọn;
-if (Còn đủ tồn kho?) then (Không)
-  :Thông báo hết hàng hoặc không đủ số lượng;
+if (Tổng đã mua + Mua mới > Giới hạn sự kiện?) then ( Yes )
+  :Báo lỗi: Vượt quá giới hạn mua của sự kiện;
   stop
-else (Có)
 endif
 
-:Trừ tồn kho và tăng soldQty/version;
-if (Cập nhật kho thành công?) then (Không)
-  :Thông báo xung đột đồng bộ hoặc retry thất bại;
-  stop
-else (Có)
+:Tính đơn giá và tổng phụ (subtotal);
+if (Có áp dụng mã Voucher?) then ( Yes )
+  if (Voucher hợp lệ & đạt đơn tối thiểu?) then ( Yes )
+    :Trừ lượt dùng của Voucher (Synchronized);
+  else ( No )
+    :Báo lỗi: Voucher không hợp lệ hoặc hết lượt;
+    stop
+  endif
+else ( No )
 endif
 
-:Tạo Order;
-:Tạo OrderDetail;
-:Ghi Order và OrderDetail xuống CSV;
-:Thông báo đặt hàng thành công;
+:Yêu cầu trừ kho sản phẩm;
+if (Trừ kho thành công?) then ( Yes )
+  :Tạo đơn hàng mới & Chi tiết đơn hàng;
+  :Ghi dữ liệu xuống CSV;
+  :Dispatch (Điều phối) đơn hàng;
+else ( No )
+  if (Có áp dụng Voucher?) then ( Yes )
+    :Hoàn tác (Rollback) lượt sử dụng Voucher;
+  else ( No )
+  endif
+  :Báo lỗi: Hết hàng hoặc xung đột giao dịch;
+  stop
+endif
 stop
 @enduml

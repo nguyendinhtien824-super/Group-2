@@ -1,39 +1,38 @@
 @startuml
-' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng datagen_flow.puml
+skinparam roundcorner 0
 skinparam defaultFontName "Arial"
-skinparam titleFontName "Arial"
 skinparam shadowing false
+skinparam ActivityShape rectangle
 skinparam ArrowColor #334155
 skinparam ActivityBackgroundColor #F8FAFC
 skinparam ActivityBorderColor #334155
 skinparam ActivityDiamondBackgroundColor #FFFFFF
-skinparam ActivityDiamondBorderColor #334155
-skinparam NoteBackgroundColor #FFF7ED
-skinparam NoteBorderColor #F97316
+skinparam conditionStyle InsideDiamond
+skinparam ConditionEndStyle hline
 
-title Luồng Generate Data CSV (10.000+ dòng)
+title Luồng Sinh Dữ Liệu CSV (Data Generator Flow)
 
 start
-:Khởi tạo DataGeneratorService;
-:Tạo thư mục data nếu chưa tồn tại;
-:Tạo danh sách 5.000 Product;
-:Ghi products.csv;
-:Tạo danh sách 2.000 Customer;
-:Ghi customers.csv;
-:Tạo danh sách FlashSaleEvent;
-:Ghi flash_events.csv;
-:Tạo 500 FlashItem liên kết Product và Event;
-:Ghi flash_items.csv;
-:Tạo 2.500 Order;
-:Ghi orders.csv;
-:Tạo 2.500 OrderDetail;
-:Ghi order_details.csv;
-:Tạo transactions.csv với header;
-:Đếm tổng số dòng dữ liệu;
-if (Tổng dòng >= 10.000?) then (Đạt)
-  :Thông báo sinh dữ liệu thành công;
-else (Không đạt)
-  :Báo lỗi dữ liệu chưa đủ yêu cầu PDF;
-endif
+:Khởi chạy DataGeneratorService;
+:Tạo hoặc dọn dẹp thư mục "data/";
+
+while (Tổng số dòng < 10.000?) is ( Yes )
+  :Sinh/Bổ sung dữ liệu products.csv;
+  :Sinh/Bổ sung dữ liệu customers.csv;
+  :Sinh/Bổ sung dữ liệu vouchers.csv;
+  :Sinh/Bổ sung dữ liệu flash_events, flash_items;
+  :Sinh/Bổ sung dữ liệu orders, order_details;
+  
+  :Tính tổng số dòng dữ liệu hiện tại;
+  
+  if (Tổng số dòng >= 10.000?) then ( Yes )
+    :Ghi nhận trạng thái dữ liệu đủ chuẩn;
+  else ( No )
+    :Cảnh báo lỗi: Dữ liệu chưa đủ;
+  endif
+endwhile ( No )
+
+:Lưu tất cả các file CSV xuống ổ đĩa;
+:Trả về kết quả báo cáo lên Console;
 stop
 @enduml

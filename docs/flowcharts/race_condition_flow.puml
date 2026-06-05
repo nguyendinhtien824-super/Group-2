@@ -1,65 +1,52 @@
 @startuml
-' Render PNG bằng: java -jar plantuml.jar -charset UTF-8 -tpng race_condition_flow.puml
+skinparam roundcorner 0
 skinparam defaultFontName "Arial"
-skinparam titleFontName "Arial"
 skinparam shadowing false
+skinparam ActivityShape rectangle
 skinparam ArrowColor #334155
 skinparam ActivityBackgroundColor #F8FAFC
 skinparam ActivityBorderColor #334155
 skinparam ActivityDiamondBackgroundColor #FFFFFF
-skinparam ActivityDiamondBorderColor #334155
-skinparam NoteBackgroundColor #FFF7ED
-skinparam NoteBorderColor #F97316
+skinparam conditionStyle InsideDiamond
+skinparam ConditionEndStyle hline
 
-title Luồng Ngăn Âm Kho - So sánh 4 Cơ chế
+title So Sánh Cơ Chế Đồng Bộ Luồng & Ngăn Race Condition
 
 start
-:Nhận yêu cầu mua Flash Sale Item;
-:Chọn cơ chế xử lý đồng thời;
+:Nhận yêu cầu trừ kho sản phẩm;
 
-switch (LockType)
-case (NO_LOCK)
-  :Thread đọc soldQty và limitedQty;
-  :Kiểm tra còn hàng;
-  :Trừ kho không có vùng bảo vệ;
-  :Ghi lại CSV;
-  note right
-    Dùng làm baseline.
-    Có nguy cơ nhiều thread cùng đọc
-    một giá trị kho cũ và gây âm kho.
-  end note
-case (FILE_LOCK)
-  :Mở file CSV;
-  :Khóa file bằng Java NIO FileLock;
-  :Đọc tồn kho mới nhất;
-  :Kiểm tra còn hàng;
-  :Cập nhật soldQty/version;
-  :Ghi lại CSV;
-  :Giải phóng FileLock;
-case (SYNCHRONIZED)
-  :Vào synchronized critical section;
-  :Đọc tồn kho trong vùng khóa;
-  :Kiểm tra còn hàng;
-  :Cập nhật soldQty/version;
-  :Ghi lại CSV;
-  :Thoát critical section;
-case (OPTIMISTIC_LOCK)
-  :Đọc soldQty, limitedQty và version;
-  :Kiểm tra còn hàng;
-  :Tính version mới;
-  if (Version hiện tại còn khớp?) then (Có)
-    :Ghi soldQty và tăng version;
-  else (Không)
-    :Tăng retryCount;
-    if (retryCount < MAX_RETRY?) then (Có)
-      :Đọc lại dữ liệu và thử lại;
-    else (Không)
-      :Từ chối giao dịch do conflict;
+if (Cơ chế là NO_LOCK?) then ( Yes )
+  :Đọc tồn kho lên bộ nhớ;
+  :Ghi đè số lượng mới xuống CSV (Hậu quả: Âm kho);
+else ( No )
+  if (Cơ chế là FILE_LOCK?) then ( Yes )
+    :Yêu cầu khóa độc quyền (Exclusive Lock);
+    :Thực hiện giao dịch;
+    :Giải phóng khóa;
+  else ( No )
+    if (Cơ chế là SYNCHRONIZED?) then ( Yes )
+      :Yêu cầu khóa monitor trên đối tượng;
+      :Thực hiện giao dịch;
+      :Tự động giải phóng khóa;
+    else ( Yes: OPTIMISTIC_LOCK )
+      repeat
+        :Đọc tồn kho và version;
+        if (Tồn kho < Số lượng mua?) then ( Yes )
+          :Báo lỗi: Hết hàng;
+          stop
+        else ( No )
+        endif
+        
+        :Kiểm tra version khi cập nhật;
+        if (Version khớp ban đầu?) then ( Yes )
+          :Ghi đè dữ liệu mới;
+        else ( No )
+          :Tăng biến đếm thử lại;
+        endif
+      backward:Thử lại vòng lặp mới;
+      repeat while (Giao dịch thành công HOẶC hết lượt retry?) is ( No ) not ( Yes )
     endif
   endif
-endswitch
-
-:Trả kết quả thành công/thất bại;
-:Ghi transaction nếu cần;
+endif
 stop
 @enduml
