@@ -1,0 +1,103 @@
+%%{init: {"flowchart": {"curve": "basis", "nodeSpacing": 22, "rankSpacing": 34}, "themeVariables": {"fontSize": "16px"}}}%%
+flowchart LR
+    subgraph Actors[" "]
+        direction LR
+        Guest((Khách vãng lai))
+        Customer((Khách hàng))
+        Admin((Quản trị viên))
+        Researcher((Nghiên cứu viên))
+    end
+
+    subgraph System["LAB211 Flash Sale Console"]
+        direction LR
+
+        subgraph CustomerLane["Khách hàng và công khai"]
+            direction TB
+            UC_Generate([Sinh bộ dữ liệu CSV<br/>trên 10.000 dòng])
+            UC_Register([Đăng ký tài khoản])
+            UC_Login([Đăng nhập])
+            UC_Account([Quản lý hồ sơ,<br/>mật khẩu và ví])
+            UC_Browse([Xem sự kiện đang hoạt động<br/>và Flash Item])
+            UC_Order([Đặt hàng Flash Sale])
+            UC_Voucher([Áp dụng voucher])
+            UC_Tier([Áp dụng ưu đãi<br/>hạng thành viên])
+            UC_Track([Theo dõi đơn và<br/>lịch sử giao dịch])
+
+            UC_Order -. include .-> UC_Login
+            UC_Order -. include .-> UC_Tier
+            UC_Voucher -. extend .-> UC_Order
+
+            UC_Generate ~~~ UC_Register ~~~ UC_Login ~~~ UC_Account
+            UC_Account ~~~ UC_Browse ~~~ UC_Order ~~~ UC_Voucher
+            UC_Voucher ~~~ UC_Tier ~~~ UC_Track
+        end
+
+        subgraph AdminLane["Quản trị hệ thống"]
+            direction TB
+            UC_AdminLogin([Xác thực Admin bằng<br/>biến môi trường])
+            UC_ProductCrud([CRUD Product<br/>và tìm kiếm])
+            UC_EventCrud([CRUD Flash Sale Event])
+            UC_EventLifecycle([Start, End, Lock<br/>và Unlock Event])
+            UC_ItemCrud([CRUD Flash Sale Item])
+            UC_CustomerCrud([CRUD, Ban và<br/>Unban Customer])
+            UC_VoucherCrud([CRUD Voucher])
+            UC_OrderLifecycle([Duyệt, hủy và<br/>hoàn tất đơn])
+            UC_AdminReport([Xem báo cáo doanh thu,<br/>hạng và voucher])
+
+            UC_ProductCrud -. include .-> UC_AdminLogin
+            UC_EventCrud -. include .-> UC_AdminLogin
+            UC_EventLifecycle -. include .-> UC_AdminLogin
+            UC_ItemCrud -. include .-> UC_AdminLogin
+            UC_CustomerCrud -. include .-> UC_AdminLogin
+            UC_VoucherCrud -. include .-> UC_AdminLogin
+            UC_OrderLifecycle -. include .-> UC_AdminLogin
+            UC_AdminReport -. include .-> UC_AdminLogin
+
+            UC_AdminLogin ~~~ UC_ProductCrud ~~~ UC_EventCrud
+            UC_EventCrud ~~~ UC_EventLifecycle ~~~ UC_ItemCrud
+            UC_ItemCrud ~~~ UC_CustomerCrud ~~~ UC_VoucherCrud
+            UC_VoucherCrud ~~~ UC_OrderLifecycle ~~~ UC_AdminReport
+        end
+
+        subgraph ResearchLane["Nghiên cứu đồng thời"]
+            direction TB
+            UC_Config([Cấu hình 100-500 luồng,<br/>tồn kho và tỷ lệ hạng])
+            UC_One([Chạy một cơ chế khóa])
+            UC_Quick([Quick benchmark<br/>bốn cơ chế])
+            UC_Full([Benchmark<br/>1000 x 4 x 3])
+            UC_Metrics([Tính success, fail, retry,<br/>elapsed, TPS và âm kho])
+            UC_Transactions([Ghi transactions.csv])
+            UC_Export([Xuất báo cáo CSV<br/>và Markdown])
+
+            UC_One -. include .-> UC_Metrics
+            UC_Quick -. include .-> UC_Metrics
+            UC_Full -. include .-> UC_Metrics
+            UC_One -. include .-> UC_Transactions
+            UC_Quick -. include .-> UC_Transactions
+            UC_Full -. include .-> UC_Transactions
+            UC_Export -. extend .-> UC_Quick
+            UC_Export -. extend .-> UC_Full
+
+            UC_Config ~~~ UC_One ~~~ UC_Quick ~~~ UC_Full
+            UC_Full ~~~ UC_Metrics ~~~ UC_Transactions ~~~ UC_Export
+        end
+
+        CustomerLane ~~~ AdminLane ~~~ ResearchLane
+    end
+
+    Guest -->|đăng ký, đăng nhập,<br/>xem sự kiện, sinh dữ liệu| CustomerLane
+    Customer -->|tài khoản, mua hàng,<br/>voucher, theo dõi đơn| CustomerLane
+    Admin -->|quản trị| AdminLane
+    Researcher -->|mô phỏng và báo cáo| ResearchLane
+
+    classDef actor fill:#0f172a,color:#ffffff,stroke:#0f172a,stroke-width:2px
+    classDef customer fill:#ecfeff,color:#164e63,stroke:#0891b2
+    classDef admin fill:#fff7ed,color:#7c2d12,stroke:#ea580c
+    classDef research fill:#f5f3ff,color:#4c1d95,stroke:#7c3aed
+    classDef utility fill:#f0fdf4,color:#14532d,stroke:#16a34a
+    class Guest,Customer,Admin,Researcher actor
+    class UC_Register,UC_Login,UC_Account,UC_Browse,UC_Order,UC_Voucher,UC_Tier,UC_Track customer
+    class UC_AdminLogin,UC_ProductCrud,UC_EventCrud,UC_EventLifecycle,UC_ItemCrud,UC_CustomerCrud,UC_VoucherCrud,UC_OrderLifecycle,UC_AdminReport admin
+    class UC_Config,UC_One,UC_Quick,UC_Full,UC_Metrics,UC_Transactions,UC_Export research
+    class UC_Generate utility
+    style Actors fill:none,stroke:none
