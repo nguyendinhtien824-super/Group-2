@@ -1,0 +1,122 @@
+classDiagram
+direction TB
+
+class Product {
+    -String productId
+    -String name
+    -String brand
+    -String category
+    -int price
+    -int stock
+    -String description
+    -int version
+    +getId() String
+    +toCsvLine() String
+    +fromCsvLine(String line) Product
+}
+
+class FlashSaleEvent {
+    -String eventId
+    -String name
+    -String startTime
+    -String endTime
+    -SaleStatus status
+    -String unlockTime
+    +getId() String
+    +start() void
+    +end() void
+    +toCsvLine() String
+    +fromCsvLine(String line) FlashSaleEvent
+}
+
+class FlashItem {
+    -String itemId
+    -String productId
+    -String eventId
+    -String productName
+    -int originalPrice
+    -int salePrice
+    -int initialStock
+    -int soldQty
+    -int remainingStock
+    -int version
+    +getId() String
+    +getRemainingStock() int
+    +setSoldQty(int value) void
+    +setVersion(int value) void
+    +toCsvLine() String
+    +fromCsvLine(String line) FlashItem
+}
+
+class Customer {
+    -String customerId
+    -String name
+    -String email
+    -String phone
+    -String address
+    -String avatarUrl
+    -CustTier tier
+    -String status
+    -String password
+    -double walletBalance
+    +getId() String
+    +setWalletBalance(double value) void
+    +toCsvLine() String
+    +fromCsvLine(String line) Customer
+}
+
+class Order {
+    -String orderId
+    -String customerId
+    -String customerName
+    -String orderDate
+    -int totalAmount
+    -OrderStatus status
+    -String eventId
+    +getId() String
+    +approve() void
+    +complete() void
+    +cancel() void
+    +toCsvLine() String
+    +fromCsvLine(String line) Order
+}
+
+class OrderDetail {
+    -String detailId
+    -String orderId
+    -String productId
+    -int quantity
+    -int unitPrice
+    -int subtotal
+    +getId() String
+    +toCsvLine() String
+    +fromCsvLine(String line) OrderDetail
+}
+
+class OrderTransaction {
+    -String transactionId
+    -String orderId
+    -String customerId
+    -String itemId
+    -int quantity
+    -String status
+    -String message
+    -long timestamp
+    +getId() String
+    +toCsvLine() String
+    +fromCsvLine(String line) OrderTransaction
+}
+
+Product "1" --> "0..*" FlashItem : offered as
+FlashSaleEvent "1" --> "0..*" FlashItem : contains
+Customer "1" --> "0..*" Order : places
+FlashSaleEvent "1" --> "0..*" Order : scopes
+Order "1" *-- "0..*" OrderDetail : contains
+Product "1" --> "0..*" OrderDetail : referenced by
+Order "0..1" --> "0..*" OrderTransaction : audited by
+Customer "1" --> "0..*" OrderTransaction : owns
+FlashItem "1" --> "0..*" OrderTransaction : records item
+
+note for Product "version hỗ trợ optimistic update"
+note for FlashItem "soldQty không vượt initialStock khi có khóa"
+note for Order "eventId giới hạn mua theo Customer + Product + Event"
