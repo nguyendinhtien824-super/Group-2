@@ -1,0 +1,65 @@
+%%{init: {"flowchart": {"curve": "basis", "nodeSpacing": 24, "rankSpacing": 36}, "themeVariables": {"fontSize": "16px"}}}%%
+flowchart LR
+    subgraph EntryStage["1. Kích hoạt sinh dữ liệu"]
+        direction TB
+        Start([Yêu cầu sinh dữ liệu]) --> Entry{Điểm vào?}
+        Entry -->|Menu Guest| Confirm{Người dùng nhập<br/>chính xác TAO?}
+        Confirm -->|Không| Cancelled([Hủy, không thay file CSV])
+        Confirm -->|Có| Invoke[DataController gọi<br/>DataGeneratorService.generateAll]
+        Entry -->|CLI --generate-data| Direct[Chạy trực tiếp,<br/>không hỏi TAO]
+        Direct --> Invoke
+        Invoke --> Directory[Tạo thư mục data tương đối<br/>nếu chưa có]
+        Directory --> Targets[Chốt số lượng seed<br/>theo đề]
+        Targets --> EntryReady([Sẵn sàng ghi dữ liệu])
+    end
+
+    subgraph GenerateStage["2. Ghi các tệp CSV bằng thao tác atomic"]
+        direction TB
+        GenerateStart([Bắt đầu generateAll]) --> Products[(products.csv<br/>5.000 dòng)]
+        Products --> Customers[(customers.csv - 2.000 dòng<br/>mật khẩu Argon2id)]
+        Customers --> Vouchers[(vouchers.csv<br/>10 dòng)]
+        Vouchers --> Events[(flash_events.csv<br/>10 dòng)]
+        Events --> Items[(flash_items.csv<br/>500 dòng)]
+        Items --> Orders[(orders.csv - 2.500 dòng<br/>có eventId)]
+        Orders --> Details[(order_details.csv<br/>2.500 dòng)]
+        Details --> Transactions{transactions.csv<br/>đã tồn tại?}
+        Transactions -->|Chưa| InitTx[(Tạo header<br/>transactions.csv)]
+        Transactions -->|Rồi| KeepTx[Giữ lịch sử giao dịch<br/>hiện có]
+        InitTx --> GenerateDone([Hoàn tất ghi tệp])
+        KeepTx --> GenerateDone
+    end
+
+    subgraph VerifyStage["3. Đếm và kiểm chứng contract"]
+        direction TB
+        VerifyStart([Đọc bộ dữ liệu vừa sinh]) --> Count[Tính số dòng từng file<br/>và TOTAL]
+        Count --> Result[/Trả Map tên file<br/>sang số dòng/]
+        Result --> EndNode([Hoàn tất generateAll])
+        Result -.-> Contract{DataGeneratorTest:<br/>TOTAL ≥ 12.500, schema và<br/>khóa ngoại hợp lệ?}
+        Contract -->|Có| Verified([Bộ dữ liệu đạt contract])
+        Contract -->|Không| Failure[Kiểm thử thất bại và<br/>chỉ rõ contract sai]
+        Failure --> Failed([Kết thúc với lỗi kiểm chứng])
+
+        ProductFk[Kiểm tra productId:<br/>P-00001 đến P-05000]
+        EventFk[Kiểm tra eventId:<br/>EV-001 đến EV-010]
+        CustomerFk[Kiểm tra customerId:<br/>C-00001 đến C-02000]
+        Result -.-> ProductFk
+        Result -.-> EventFk
+        Result -.-> CustomerFk
+        ProductFk -.-> Contract
+        EventFk -.-> Contract
+        CustomerFk -.-> Contract
+    end
+
+    EntryStage ==> GenerateStage
+    GenerateStage ==> VerifyStage
+
+    classDef startEnd fill:#0f172a,color:#ffffff,stroke:#0f172a
+    classDef process fill:#eff6ff,color:#1e3a8a,stroke:#3b82f6
+    classDef storage fill:#f5f3ff,color:#4c1d95,stroke:#7c3aed
+    classDef decision fill:#fff7ed,color:#7c2d12,stroke:#f97316
+    classDef error fill:#fef2f2,color:#991b1b,stroke:#ef4444
+    class Start,Cancelled,EntryReady,GenerateStart,GenerateDone,VerifyStart,EndNode,Verified,Failed startEnd
+    class Direct,Invoke,Directory,Targets,KeepTx,Count,ProductFk,EventFk,CustomerFk process
+    class Products,Customers,Vouchers,Events,Items,Orders,Details,InitTx storage
+    class Entry,Confirm,Transactions,Contract decision
+    class Failure error
