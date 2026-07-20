@@ -1,0 +1,43 @@
+flowchart TD
+    Start([Bắt đầu thử nghiệm đồng thời]) --> Ready[ExecutorService tạo N worker]
+    Ready --> Latch[Workers chờ cùng CountDownLatch]
+    Latch --> Release[Nhả latch để bắt đầu đồng thời]
+    Release --> Select{LockType?}
+
+    Select -->|NO_LOCK| NLRead[Nhiều worker đọc cùng snapshot soldQty]
+    NLRead --> NLDelay[Nhả khóa I/O trước read-modify-write]
+    NLDelay --> NLWrite[Mỗi worker ghi snapshot đã cũ]
+    NLWrite --> Lost[Lost update và successQuantity có thể vượt stock]
+    Lost --> Unsafe[Kết quả không nhất quán hoặc âm kho logic]
+
+    Select -->|FILE_LOCK| FL[Khóa OS bằng FileChannel và FileLock trên sidecar .lck]
+    FL --> ProtectedRead[Đọc lại trạng thái CSV hiện tại]
+    ProtectedRead --> ProtectedWrite[Kiểm tra kho, cập nhật và ghi atomic]
+
+    Select -->|SYNCHRONIZED| Sync[Monitor synchronized tại FlashItemRepository]
+    Sync --> ProtectedRead
+
+    Select -->|OPTIMISTIC_LOCK| Snapshot[Đọc snapshot và expectedVersion]
+    Snapshot --> Compare{Version hiện tại còn khớp?}
+    Compare -->|Có| CasWrite[Kiểm tra kho, tăng soldQty và version]
+    Compare -->|Không| Retry{Còn retry trong MAX_RETRY bằng 3?}
+    Retry -->|Có| Snapshot
+    Retry -->|Không| Conflict[Đánh dấu request thất bại do conflict]
+
+    ProtectedWrite --> Safe[Tồn kho không âm và dữ liệu nhất quán]
+    CasWrite --> Safe
+    Unsafe --> Metrics[Thu success, fail, retry, finalStock và negativeStock]
+    Safe --> Metrics
+    Conflict --> Metrics
+    Metrics --> EndNode([Kết thúc và so sánh cơ chế])
+
+    classDef startEnd fill:#0f172a,color:#ffffff,stroke:#0f172a
+    classDef unsafe fill:#fef2f2,color:#991b1b,stroke:#ef4444
+    classDef safe fill:#ecfdf5,color:#065f46,stroke:#10b981
+    classDef lock fill:#eff6ff,color:#1e3a8a,stroke:#3b82f6
+    classDef decision fill:#fff7ed,color:#7c2d12,stroke:#f97316
+    class Start,EndNode startEnd
+    class NLRead,NLDelay,NLWrite,Lost,Unsafe unsafe
+    class FL,ProtectedRead,ProtectedWrite,Sync,Snapshot,CasWrite safe
+    class Ready,Latch,Release,Metrics,Conflict lock
+    class Select,Compare,Retry decision
