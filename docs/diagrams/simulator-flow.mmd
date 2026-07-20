@@ -1,0 +1,66 @@
+%%{init: {"flowchart": {"curve": "basis", "nodeSpacing": 24, "rankSpacing": 36}, "themeVariables": {"fontSize": "16px"}}}%%
+flowchart LR
+    subgraph ConfigStage["1. Cấu hình kịch bản"]
+        direction TB
+        Start([Mở khu vực Researcher]) --> Mode{Chọn chế độ}
+        Mode -->|Một cơ chế| Single[/LockType, 1-1000 threads<br/>và stock/]
+        Mode -->|Quick| Quick[/100-500 threads, stock<br/>và tỷ lệ CustTier/]
+        Mode -->|Bắt buộc| Full[1000 threads x 4 LockType<br/>x 3 lần]
+        Single --> Validate[Kiểm tra lockType, thread,<br/>stock và composition]
+        Quick --> Four[Chạy đủ bốn LockType]
+        Four --> Validate
+        Full --> FourRepeat[Chạy bốn LockType<br/>cho từng lần lặp]
+        FourRepeat --> Validate
+        Validate --> ConfigReady([Cấu hình hợp lệ])
+    end
+
+    subgraph ExecuteStage["2. Chuẩn bị và thực thi đồng thời"]
+        direction TB
+        ExecuteStart([Bắt đầu một lượt chạy]) --> Temp[(Tạo thư mục tạm và<br/>flash_items.csv thật)]
+        Temp --> Seed[Tạo một FlashItem<br/>với stock ban đầu]
+        Seed --> Pool[ExecutorService<br/>fixed thread pool]
+        Pool --> Ready[readyLatch đếm đủ worker]
+        Ready --> Timer[Bắt đầu timer và<br/>nhả startLatch]
+        Timer --> Buyer[Mỗi worker chọn CustTier<br/>và quantity từ 1 đến 2]
+        Buyer --> Dispatch{LockType}
+        Dispatch -->|NO_LOCK| NoLock[sellNoLock]
+        Dispatch -->|FILE_LOCK| FileLock[sellWithFileLock]
+        Dispatch -->|SYNCHRONIZED| Synchronized[sellWithSynchronized]
+        Dispatch -->|OPTIMISTIC_LOCK| Optimistic[sellWithOptimisticLock<br/>tối đa 3 retry]
+        NoLock --> Collect
+        FileLock --> Collect
+        Synchronized --> Collect
+        Optimistic --> Collect[Atomic counters và<br/>ConcurrentLinkedQueue]
+        Collect --> Done[doneLatch chờ<br/>tất cả worker]
+        Done --> Persist[(Ghi toàn bộ OrderTransaction<br/>vào transactions.csv)]
+        Persist --> ExecuteDone([Hoàn tất lượt chạy])
+    end
+
+    subgraph ResultStage["3. Đo lường, lặp và báo cáo"]
+        direction TB
+        ResultStart([Đọc kết quả lượt chạy]) --> Metrics[Tính elapsed, success, fail,<br/>successfulQuantity, retry và finalStock]
+        Metrics --> Tps[TPS = successCount<br/>chia elapsedSeconds]
+        Tps --> Consistency[Đánh giá negativeStock<br/>và dataConsistent]
+        Consistency --> Cleanup[Xóa workspace tạm]
+        Cleanup --> More{Còn cơ chế<br/>hoặc lần lặp?}
+        More -->|Có| Repeat[Quay lại với cấu hình<br/>cơ chế/lần lặp kế tiếp]
+        More -->|Không| Report{Xuất báo cáo?}
+        Report -->|Có| Export[(simulation_results.csv<br/>và simulation_report.md)]
+        Report -->|Không| EndNode([Hiển thị kết quả])
+        Export --> EndNode
+        Repeat --> RepeatEnd([Tiếp tục benchmark])
+    end
+
+    ConfigStage ==> ExecuteStage
+    ExecuteStage ==> ResultStage
+
+    classDef startEnd fill:#0f172a,color:#ffffff,stroke:#0f172a
+    classDef process fill:#eff6ff,color:#1e3a8a,stroke:#3b82f6
+    classDef storage fill:#f5f3ff,color:#4c1d95,stroke:#7c3aed
+    classDef decision fill:#fff7ed,color:#7c2d12,stroke:#f97316
+    classDef metric fill:#ecfdf5,color:#065f46,stroke:#10b981
+    class Start,ConfigReady,ExecuteStart,ExecuteDone,ResultStart,EndNode,RepeatEnd startEnd
+    class Validate,Single,Quick,Four,Full,FourRepeat,Seed,Pool,Ready,Timer,Buyer,NoLock,FileLock,Synchronized,Optimistic,Collect,Done,Cleanup,Repeat process
+    class Temp,Persist,Export storage
+    class Mode,Dispatch,More,Report decision
+    class Metrics,Tps,Consistency metric
