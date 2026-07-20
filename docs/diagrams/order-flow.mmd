@@ -1,0 +1,63 @@
+flowchart LR
+    subgraph Intake[1. Tiếp nhận và xếp hàng]
+        direction TB
+        Start([Bắt đầu đặt hàng]) --> Input[/Nhập itemId, quantity 1-2,<br/>customerId, voucher tùy chọn/]
+        Input --> ValidInput{Mã, quantity<br/>hợp lệ?}
+        ValidInput -->|Có| PreCustomer{Customer tồn tại<br/>và không BANNED?}
+        PreCustomer -->|Có| Tier{CustTier?}
+        Tier -->|STANDARD / null| StandardQueue[Enqueue Standard<br/>theo sequence FIFO]
+        Tier -->|VIP / Premium| PriorityQueue[Enqueue ưu tiên<br/>theo sequence FIFO]
+        StandardQueue --> QueueHead{Request đứng đầu<br/>và không có active?}
+        PriorityQueue --> QueueHead
+        QueueHead -->|Chưa| Await[Condition.await<br/>không preempt request đang chạy]
+        Await --> QueueHead
+        QueueHead -->|Có| Permit[Nhận AutoCloseable Permit]
+        IntakeFail[Input / Customer bị từ chối<br/>hoặc thread bị interrupt]
+    end
+
+    subgraph Guard[2. Critical section và ràng buộc]
+        direction TB
+        Recheck[Đọc lại Customer, FlashItem<br/>và FlashSaleEvent] --> StateOk{Customer hợp lệ và<br/>Event ACTIVE đúng thời gian?}
+        StateOk -->|Có| History[Đọc lịch sử Customer<br/>+ Product + Event]
+        History --> LimitOk{Tổng đã mua<br/>+ quantity ≤ 2?}
+        LimitOk -->|Có| Price[Áp dụng CustTier,<br/>kiểm tra và giữ voucher]
+        Price --> Funds{Ví đủ tiền?}
+        Funds -->|Có| Stock{Version khớp và đủ kho?<br/>Optimistic retry tối đa 3}
+        GuardFail[Vi phạm trạng thái, giới hạn 2,<br/>ví hoặc stock-version]
+    end
+
+    subgraph Commit[3. Cập nhật giao dịch]
+        direction TB
+        Debit[Trừ ví, tăng soldQty/version<br/>và lưu Customer] --> SaveOrder[Lưu Order PENDING<br/>và OrderDetail]
+        SaveOrder --> SaveTx[Lưu OrderTransaction]
+        SaveTx --> Release[Close Permit;<br/>đánh thức request kế tiếp]
+        Release --> Success([Đặt hàng thành công])
+        CommitFail[Lỗi ghi Order,<br/>OrderDetail hoặc Transaction]
+    end
+
+    Failure[[Chuyển sang order_failure_flow:<br/>hoàn tài nguyên và kết thúc an toàn]]
+
+    Permit --> Recheck
+    Stock -->|Có| Debit
+
+    ValidInput -->|Không| IntakeFail
+    PreCustomer -->|Không| IntakeFail
+    QueueHead -.->|Thread bị interrupt| IntakeFail
+    StateOk -->|Không| GuardFail
+    LimitOk -->|Không| GuardFail
+    Funds -->|Không| GuardFail
+    Stock -->|Không / hết retry| GuardFail
+    SaveOrder -.->|Lỗi ghi CSV| CommitFail
+    SaveTx -.->|Lỗi ghi CSV| CommitFail
+    IntakeFail --> Failure
+    GuardFail --> Failure
+    CommitFail --> Failure
+
+    classDef startEnd fill:#0f172a,color:#ffffff,stroke:#0f172a
+    classDef process fill:#eff6ff,color:#1e3a8a,stroke:#3b82f6
+    classDef decision fill:#fff7ed,color:#7c2d12,stroke:#f97316
+    classDef failure fill:#fef2f2,color:#991b1b,stroke:#ef4444
+    class Start,Success startEnd
+    class Input,StandardQueue,PriorityQueue,Await,Permit,Recheck,History,Price,Debit,SaveOrder,SaveTx,Release process
+    class ValidInput,PreCustomer,Tier,QueueHead,StateOk,LimitOk,Funds,Stock decision
+    class IntakeFail,GuardFail,CommitFail,Failure failure
