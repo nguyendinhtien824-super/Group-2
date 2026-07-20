@@ -1,0 +1,40 @@
+flowchart TB
+    subgraph Cause[1. Phân loại nguyên nhân]
+        direction LR
+        Start([Đi vào nhánh thất bại]) --> Kind{Lỗi xảy ra ở đâu?}
+        Kind -->|Trước Permit| Before[Input sai hoặc<br/>Customer không hợp lệ]
+        Kind -->|Đang chờ queue| Interrupt[Loại request khỏi queue<br/>và giữ interrupt flag]
+        Kind -->|Trong critical section| Critical[Event / giới hạn 2 / ví /<br/>stock-version không hợp lệ]
+        Kind -->|Khi ghi CSV| Persist[Order, OrderDetail hoặc<br/>Transaction ghi thất bại]
+    end
+
+    subgraph Restore[2. Hoàn tài nguyên đã thay đổi]
+        direction LR
+        Reserved{Đã giữ voucher?}
+        Reserved -->|Có| Voucher[Hoàn remainingUses voucher]
+        Reserved -->|Không| Debited{Đã trừ ví hoặc kho?}
+        Voucher --> Debited
+        Debited -->|Có| Balance[Hoàn walletBalance,<br/>soldQty và version]
+        Debited -->|Không| Close
+        Balance --> Close[Close Permit bằng<br/>try-with-resources]
+        Close --> Wake[Đánh thức request kế tiếp]
+    end
+
+    subgraph Finish[3. Kết thúc kiểm soát]
+        direction LR
+        Message[Trả thông báo nghiệp vụ rõ ràng<br/>không lộ lỗi hạ tầng] --> Failed([Kết thúc thất bại an toàn])
+    end
+
+    Before --> Message
+    Interrupt --> Message
+    Critical --> Reserved
+    Persist --> Reserved
+    Wake --> Message
+
+    classDef startEnd fill:#0f172a,color:#ffffff,stroke:#0f172a
+    classDef process fill:#eff6ff,color:#1e3a8a,stroke:#3b82f6
+    classDef decision fill:#fff7ed,color:#7c2d12,stroke:#f97316
+    classDef error fill:#fef2f2,color:#991b1b,stroke:#ef4444
+    class Start,Failed startEnd
+    class Before,Interrupt,Critical,Persist,Voucher,Balance,Close,Wake,Message process
+    class Kind,Reserved,Debited decision
