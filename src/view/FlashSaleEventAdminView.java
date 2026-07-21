@@ -142,3 +142,5 @@ public class FlashSaleEventAdminView {
         return value.length() <= limit ? value : value.substring(0, limit - 3) + "...";
     }
 }
+
+// Member 3
