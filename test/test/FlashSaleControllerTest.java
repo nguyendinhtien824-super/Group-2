@@ -173,3 +173,5 @@ public class FlashSaleControllerTest {
                 1000000, 700000, 100);
     }
 }
+
+// Member 3
