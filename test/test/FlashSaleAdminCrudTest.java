@@ -95,3 +95,5 @@ public class FlashSaleAdminCrudTest {
         }
     }
 }
+
+// Member 3
