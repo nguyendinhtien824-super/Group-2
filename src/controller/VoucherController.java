@@ -55,3 +55,5 @@ public class VoucherController {
     public record Result<T>(boolean success, String message, T data) {
     }
 }
+
+// Member 3
