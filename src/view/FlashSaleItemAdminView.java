@@ -121,3 +121,5 @@ public class FlashSaleItemAdminView {
         }
     }
 }
+
+// Member 3
