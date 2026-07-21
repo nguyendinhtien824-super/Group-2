@@ -5,7 +5,7 @@
 
 ---
 
-## 👤 Thành viên 1: Core, Database, Model, Exception & Security (44 file)
+## 👤 Đỗ Bá Quang Hưng: Core, Database, Model, Exception & Security (44 file)
 
 ### 📌 Nhiệm vụ
 Phụ trách cấu hình dự án gốc, file dữ liệu CSV mẫu, Domain Models, Enums, Custom Exceptions và Security.
@@ -64,7 +64,7 @@ rtk git commit -m "feat(core): setup project config, data csvs, models, exceptio
 
 ---
 
-## 👤 Thành viên 2: Repository, Core Services & Infrastructure (44 file)
+## 👤Nguyễn Đình Tiến: Repository, Core Services & Infrastructure (44 file)
 
 ### 📌 Nhiệm vụ
 Phụ trách tầng Data Access (Repository), các Service xử lý logic hệ thống (Services) và Security tools.
@@ -123,7 +123,7 @@ rtk git commit -m "feat(service): implement repository layer, core business serv
 
 ---
 
-## 👤 Thành viên 3: Controllers, Console Views & UI Interaction (44 file)
+## 👤 Nguyễn Trần Anh Kiệt: Controllers, Console Views & UI Interaction (44 file)
 
 ### 📌 Nhiệm vụ
 Phụ trách tầng Điều khiển (Controllers), Giao diện Console (Views) và các bài test liên quan.
@@ -182,7 +182,7 @@ rtk git commit -m "feat(ui): implement application controllers, console views an
 
 ---
 
-## 👤 Thành viên 4: Documentation, Diagrams, Automation Scripts & Unit Tests (45 file)
+## 👤 Trần Văn Phúc: Documentation, Diagrams, Automation Scripts & Unit Tests (45 file)
 
 ### 📌 Nhiệm vụ
 Phụ trách toàn bộ tài liệu (Docs, Sơ đồ Class/Use case), Scripts tự động hóa và Unit Tests còn lại.
