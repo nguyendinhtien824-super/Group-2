@@ -132,3 +132,5 @@ public class FlashSaleController {
     }
 }
 
+
+// Member 3
