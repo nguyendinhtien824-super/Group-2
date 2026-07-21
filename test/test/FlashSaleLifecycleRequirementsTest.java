@@ -130,3 +130,5 @@ public class FlashSaleLifecycleRequirementsTest {
         directory.delete();
     }
 }
+
+// Member 3
