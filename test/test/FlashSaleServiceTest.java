@@ -983,3 +983,5 @@ public class FlashSaleServiceTest {
         assertTrue(orderCtrl.bookItem("FSI-LOCK", 1, "C-00001"));
     }
 }
+
+// Member 3
