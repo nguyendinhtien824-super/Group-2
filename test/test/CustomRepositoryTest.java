@@ -108,3 +108,5 @@ public class CustomRepositoryTest {
         assertNull(voucherRepo.findByCode("NOT_EXIST"));
     }
 }
+
+// Member 3
