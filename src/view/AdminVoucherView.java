@@ -128,3 +128,5 @@ public class AdminVoucherView {
         System.out.println((result.success() ? "Thành công: " : "Lỗi: ") + result.message());
     }
 }
+
+// Member 3
