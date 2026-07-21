@@ -8,3 +8,5 @@ public class ReportView {
         result.forEach((file, count) -> System.out.printf("- %s: %d dòng%n", file, count));
     }
 }
+
+// Member 3
