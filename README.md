@@ -164,4 +164,4 @@ Dự án được hoàn thiện bởi các thành viên thuộc **Nhóm 02 - L�
 | **QE200133** | Nguyễn Đình Tiến | Thiết kế Menu Console, viết giao diện điều phối đầu vào, xử lý ngoại lệ biên tập và xây dựng chức năng Admin (CRUD Customer, Ban/Unban). | 25% |
 
 ---
-*Dự án được phân phối dưới dạng tài liệu học tập của môn LAB211. Mọi đóng góp hoặc báo cáo lỗi xin vui lòng tạo Issue tại Repository gốc.*
+
