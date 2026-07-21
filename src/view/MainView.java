@@ -192,3 +192,5 @@ public class MainView {
         System.out.println("Đăng xuất thành công.");
     }
 }
+
+// Member 3
