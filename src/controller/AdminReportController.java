@@ -23,3 +23,5 @@ public class AdminReportController {
     public record Result(boolean success, String message, AdminReportService.Report report) {
     }
 }
+
+// Member 3
