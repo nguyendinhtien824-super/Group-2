@@ -117,3 +117,5 @@ public class CustomerAdminServiceTest {
                 "", "STANDARD", "Secure123!");
     }
 }
+
+// Member 3
