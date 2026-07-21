@@ -120,3 +120,5 @@ public class FlashSaleShoppingView {
         return value.substring(0, maxLength - 3) + "...";
     }
 }
+
+// Member 3
