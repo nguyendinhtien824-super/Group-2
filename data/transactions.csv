@@ -1,0 +1,8 @@
+transactionId,orderId,customerId,itemId,quantity,status,message,timestamp
+TX-00001,O-02501,C-02001,FI-00021,1,PENDING,Đặt hàng thành công | Hạng: STANDARD | SL: 1 | Voucher: Không dùng,1782780608552
+TX-00002,O-02502,C-02001,FI-00496,1,PENDING,Đặt hàng thành công | Hạng: STANDARD | SL: 1 | Voucher: Không dùng,1782782086347
+TX-00003,O-02501,C-02001,FI-00021,1,APPROVED,Đơn hàng đã được Admin phê duyệt thành công,1782782208777
+TX-00004,O-02503,C-01994,FI-00027,2,PENDING,Đặt hàng thành công | Hạng: SILVER | SL: 2 | Voucher: SHOPEE10,1782790548859
+TX-00005,O-02503,C-01994,FI-00027,2,CANCELLED,"Đơn hàng đã bị hủy bởi Admin. Toàn bộ tiền ví, tồn kho và voucher đã được hoàn trả.",1782790800623
+TX-00006,O-02504,C-02000,FI-00503,2,PENDING,Đặt hàng thành công | Hạng: GOLD | SL: 2 | Voucher: Không dùng,1782803647715
+TX-00007,O-02504,C-02000,FI-00503,2,CANCELLED,"Đơn hàng đã bị hủy bởi Admin. Toàn bộ tiền ví, tồn kho và voucher đã được hoàn trả.",1782803874107

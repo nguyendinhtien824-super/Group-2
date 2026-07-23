@@ -158,10 +158,10 @@ Dự án được hoàn thiện bởi các thành viên thuộc **Nhóm 02 - L�
 
 | MSSV | Họ và tên | Vai trò / Nhiệm vụ chính | Đóng góp |
 |:---:|---|---|:---:|
-| **QE200133** | Nguyễn Đình Tiến | **Trưởng nhóm**, thiết kế kiến trúc MVC, cài đặt Base Repository, viết bộ sinh dữ liệu tự động `DataGenerator` và cài đặt JUnit Tests. | 25% |
+| **QE190032** | Đỗ Bá Quang Hưng |  thiết kế kiến trúc MVC, cài đặt Base Repository, viết bộ sinh dữ liệu tự động `DataGenerator` và cài đặt JUnit Tests. | 25% |
 | **QE200141** | Trần Văn Phúc | Phụ trách cài đặt logic Đồng bộ hóa & Khóa (`FILE_LOCK`, `SYNCHRONIZED`, `OPTIMISTIC_LOCK`), xây dựng động cơ giả lập simulator và thực hiện đo đạc benchmark. | 25% |
 | **QE200105** | Nguyễn Trần Anh Kiệt | Xây dựng nghiệp vụ Khách hàng (Đăng ký, Đăng nhập, tích hợp VIP Tier và thuật toán áp dụng voucher tối ưu hóa chi phí hóa đơn). | 25% |
-| **QE190032** | Đỗ Bá Quang Hưng | Thiết kế Menu Console, viết giao diện điều phối đầu vào, xử lý ngoại lệ biên tập và xây dựng chức năng Admin (CRUD Customer, Ban/Unban). | 25% |
+| **QE200133** | Nguyễn Đình Tiến | Thiết kế Menu Console, viết giao diện điều phối đầu vào, xử lý ngoại lệ biên tập và xây dựng chức năng Admin (CRUD Customer, Ban/Unban). | 25% |
 
 ---
-*Dự án được phân phối dưới dạng tài liệu học tập của môn LAB211. Mọi đóng góp hoặc báo cáo lỗi xin vui lòng tạo Issue tại Repository gốc.*
+

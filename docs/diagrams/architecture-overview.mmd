@@ -1,0 +1,49 @@
+flowchart TB
+    subgraph Presentation[Presentation / Controller]
+        direction LR
+        OC[OrderController]
+        SC[SimulatorController]
+        DC[DataController]
+    end
+
+    subgraph Application[Application / Service]
+        direction LR
+        FS[FlashSaleService]
+        OP[OrderPlacementService]
+        OL[OrderLifecycleService]
+        Q[OrderRequestQueue<br/>VIP/Premium priority + FIFO]
+        SS[SimulatorService]
+        SE[SimulationExecutor]
+        DG[DataGeneratorService]
+    end
+
+    subgraph Persistence[CSV Persistence]
+        direction LR
+        CSV[CsvRepository<br/>UTF-8 + atomic write + RW lock]
+        Catalog[Catalog repositories<br/>Product + Event + FlashItem]
+        Commerce[Commerce repositories<br/>Customer + Voucher + Order<br/>+ OrderDetail + Transaction]
+        CSV --> Catalog
+        CSV --> Commerce
+    end
+
+    OC --> FS
+    FS --> OP
+    FS --> OL
+    OP --> Q
+    SC --> SS
+    SS --> SE
+    DC --> DG
+
+    OP --> Catalog
+    OP --> Commerce
+    OL --> Commerce
+    SE --> Catalog
+    SS --> Commerce
+    DG --> CSV
+
+    classDef presentation fill:#f8fafc,color:#0f172a,stroke:#64748b
+    classDef application fill:#eff6ff,color:#1e3a8a,stroke:#3b82f6
+    classDef persistence fill:#ecfdf5,color:#065f46,stroke:#10b981
+    class OC,SC,DC presentation
+    class FS,OP,OL,Q,SS,SE,DG application
+    class CSV,Catalog,Commerce persistence

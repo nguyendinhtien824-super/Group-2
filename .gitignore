@@ -1,0 +1,15 @@
+.env
+.idea/
+.vscode/
+scratch/
+target/
+bin/
+bin-test/
+test_data/
+test_service/
+test_cust_ctrl/
+test_flash_ctrl/
+tuan 3/test_data/
+tuan 3/test_service/
+tuan 3/test_cust_ctrl/
+tuan 3/test_flash_ctrl/
